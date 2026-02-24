@@ -23,12 +23,11 @@ shocks_variance_yearly <-
   mutate(date_y = year(date)) |>
   group_by(date_y) |>
   summarise(
-    var_shock = sqrt(VarCI(estimate_brw, conf.level = 0.90, method = "bonett"))[1],
-    lwr.ci = sqrt(VarCI(estimate_brw, conf.level = 0.90, method = "bonett"))[2],
-    upr.ci = sqrt(VarCI(estimate_brw, conf.level = 0.90, method = "bonett"))[3]
+    var_shock = sqrt(VarCI(estimate_brw, conf.level = 0.95, method = "bonett"))[1],
+    lwr.ci = sqrt(VarCI(estimate_brw, conf.level = 0.95, method = "bonett"))[2],
+    upr.ci = sqrt(VarCI(estimate_brw, conf.level = 0.95, method = "bonett"))[3]
   )
 
-sqrt(VarCI(MonetaryShocksBuRogersWu$estimate_brw, conf.level = 0.90, method = "bonett"))[1]
 
 shocks_variance_plot <-
   ggplot(shocks_variance_yearly) +
@@ -42,7 +41,7 @@ shocks_variance_plot <-
   theme_light() +
   labs(
     title = "стандартные отклонения шоков монетарной политики\nпо годам",
-    caption = "шоки посчитатны ЦМИ по методу Bu-Rogers-Wu (2021), 90% доверительный интервал"
+    caption = "шоки посчитаны ЦМИ по методу Bu-Rogers-Wu (2021), 95% доверительный интервал Bonett (2006)"
   ) +
   theme(
     plot.title = element_text(size = 13),
@@ -93,6 +92,8 @@ ggsave("~/Library/CloudStorage/OneDrive-Personal/MACRO/export/ru_shocks_variance
   dpi = 400
 )
 
+
+
 shocks_quarterly_plot <-
   ggplot(shocks_quarterly, aes(x = date_yq, y = estimate_brw)) +
   geom_col(fill = "#6E8C2F", color = "#404040") +
@@ -100,13 +101,13 @@ shocks_quarterly_plot <-
   scale_x_yearquarter(NULL, date_breaks = "1 year", date_labels = "'%y") +
   theme_light() +
   labs(
-    title = "монетарные шоки по кварталам",
-    caption = "шоки посчитатны ЦМИ по методу Bu-Rogers-Wu (2021)"
+    title = "монетарные шоки, сумма по кварталам",
+    caption = "шоки посчитаны ЦМИ по методу Bu-Rogers-Wu (2021)"
   ) +
   theme(
-    plot.title = element_text(size = 13),
+    plot.title = element_text(size = 12),
     # plot.title = element_markdown(size = 13),
-    text = element_text(size = 13, family = "SB Sans Interface"),
+    text = element_text(size = 12, family = "SB Sans Interface"),
     plot.background = element_rect(fill = "#FDF5E6", color = NA),
     panel.background = element_rect(fill = "#FDF5E6", color = NA),
     legend.position = "top",
@@ -126,7 +127,7 @@ shocks_quarterly_plot <-
     # panel.grid.minor = element_line(color = "gray100"),
     panel.grid.major.y = element_line(color = alpha("#404040", 0.2)),
     panel.grid.minor.y = element_line(color = NA),
-    panel.grid.major.x = element_line(color = alpha("#404040", 0.1)),
+    panel.grid.major.x = element_line(color = alpha("#404040", 0)),
     panel.grid.minor.x = element_line(color = NA),
     plot.margin = unit(c(0.5, 0.5, 0.5, 0.5), "in"),
     strip.background = element_blank(),

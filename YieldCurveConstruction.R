@@ -13,7 +13,7 @@ rates_saved <- read_csv("YieldCurve.csv") |>
 d_from <- max(rates_saved$index)
 d_till <- query_iss(rest_path = "engines/stock/zcyc")$yearyields.dates$till
 
-if (d_till > d_from) {
+if (d_till+30 > d_from) {
   message("new data available")
 
   date_seq <- seq.Date(d_from + 1, d_till, by = "1 day")

@@ -20,7 +20,7 @@ pacman::p_load(
 
 rates <- read_csv("YieldCurve.csv", ) |>
   mutate(index = as.Date(index)) |>
-  na.omit() |> suppressMessages()
+  filter(!if_all(!index, is.na)) |> suppressMessages()
 
 
 
@@ -185,7 +185,7 @@ monetary_shocks_cleaned <-
       ifelse(year_month %in% FOMC_months$fomc_yearmonth, estimate, 0),
     date = ym(year_month + 1) - 1
   ) |>
-  select(date, estimate_brw)
+  select(date,year_month, estimate_brw)
 
 
 # Results Export -----

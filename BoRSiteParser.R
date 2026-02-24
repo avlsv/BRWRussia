@@ -2,21 +2,11 @@ if (!requireNamespace("pacman", quietly = TRUE)) {
   install.packages("pacman")
 }
 
-# Load rvest (for scraping), stringr (for pattern matching/extraction), and dplyr (for piping)
 pacman::p_load(rvest, stringr, dplyr, readr, tibble) # tibble added for structured output
-
-# i_am("BRWRussia/MonetaryPolicyShocksEstimation.R")
-# setwd(here("BRWRussia"))
-
-# ----------------------------------------------------------------------
-# 2. Define target URL and link pattern
-# ----------------------------------------------------------------------
 
 target_url <- "https://www.cbr.ru/dkp/cal_mp/"
 
-# Define the link pattern. We use parentheses () around the date part
-# (the digits) to CAPTURE them for later extraction.
-# Pattern: (digits, length 8) followed by _133000key.htm (or similar structure)
+
 date_capture_pattern <- "(/press/pr/\\?file=)(\\d{8})_(\\d{6}key\\.htm$)"
 
 # The date format is DDMMYYYY (e.g., 24102025)
