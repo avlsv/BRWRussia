@@ -12,11 +12,6 @@ date_capture_pattern <- "(/press/pr/\\?file=)(\\d{8})_(\\d{6}key\\.htm$)"
 # The date format is DDMMYYYY (e.g., 24102025)
 
 
-# ----------------------------------------------------------------------
-# 3. Scrape, filter, and extract dates
-# ----------------------------------------------------------------------
-
-
 tryCatch(
   {
     cat("Scraping links from:", target_url, "\n")

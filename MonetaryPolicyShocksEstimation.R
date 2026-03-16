@@ -13,28 +13,28 @@ pacman::p_load(
 # renv::snapshot()
 # i_am("BRWRussia/MonetaryPolicyShocksEstimation.R")
 # setwd(here("BRWRussia"))
-#setwd("~/Documents/BRWRussia")
+# setwd("~/Documents/BRWRussia")
+
+# source("YieldCurveConstruction.R")
+# source("BoRSiteParser.R")
 
 
-
-
-rates <- read_csv("YieldCurve.csv", ) |>
+rates <- read_csv("yield_curves_1.csv") |>
   mutate(index = as.Date(index)) |>
-  filter(!if_all(!index, is.na)) |> suppressMessages()
-
+  filter(!if_all(!index, is.na)) |>
+  suppressMessages() |>
+  select(-2)
 
 
 returns <- rates |>
-  mutate(across(-index, \(x) c(NA, diff(x,lag=1))))
-
+  mutate(across(-index, \(x) c(NA, diff(x, lag = 1))))
 
 
 FOMC_dates <- read_csv("BoRMPSchedule.csv") |>
-  select(date, meeting_link_ru)|> 
-  rename(fomc_date=date) |>
+  select(date, meeting_link_ru) |>
+  rename(fomc_date = date) |>
   na.omit() |>
   select(fomc_date)
-
 
 
 FOMC_months <-
@@ -45,7 +45,8 @@ FOMC_months <-
   )
 
 
-returns_restricted <- returns %>%
+returns_restricted <-
+  returns %>%
   filter(index >= "2014-01-01") |>
   na.omit()
 
@@ -56,9 +57,11 @@ common_region <-
 lost <- sum(is.na(common_region$CBRFYC3))
 notlost <- nrow(common_region) - lost
 
-message(paste0("We have lost ", lost,
-               " observations!\nThe total number of observations left is ", 
-               notlost, "!"))
+message(paste0(
+  "We have lost ", lost,
+  " observations!\nThe total number of observations left is ",
+  notlost, "!"
+))
 
 
 common_region_clean <- common_region |> na.omit()
@@ -93,6 +96,12 @@ variance_inequality <-
 if (prod(variance_inequality) == 0) {
   stop("Variance inequality (the main assumption of estimation) is not satisfied. ")
 }
+
+# write.xlsx(bind_rows(
+#   monetary_region_diff_rate |> mutate(region = "monetary"),
+#   nonmonetary_region_diff_rate |> mutate(region = "nonmonetary")
+# ), "regions_diff.xlsx")
+
 
 ## First Stage ----
 
@@ -139,7 +148,7 @@ first_stage_data <- bind_cols(first_stage_data_no_iv, instruments) |>
   }
 }
 
-betas
+betas <- betas |> mutate(horizon = as.numeric(str_remove(term, "CBRFYC")))
 
 ## Second Stage -----
 
@@ -177,20 +186,51 @@ beta_vector <- betas$estimate
   }
 }
 
+# 
+# diff_returns_monthly |>
+#   pivot_longer(cols = -year_month) |>
+#   mutate(horizon = as.numeric(str_remove(name, "CBRFYC"))) |>
+#   mutate(year = year(year_month), month = month(year_month)) |>
+#   filter(year_month%in% FOMC_months$fomc_yearmonth)|>
+#   ggplot(aes(y = value, x = horizon, color = year_month, group = year_month)) +
+#   geom_line()+
+#   geom_hline(aes(yintercept = 0), color="darkred")+
+#   facet_grid(year~month, scales = "free_y", axes	="all_y") 
+# 
+# 
+# ggsave(
+#   filename = "return_profiles.pdf", 
+#   width = 420, 
+#   height = 297, 
+#   units = "mm", 
+#   dpi = 300
+# )
+# 
+
+ggplot(betas, aes(x = horizon, y = estimate)) +
+  geom_line() +
+  geom_point() +
+  scale_x_continuous(n.breaks = 6) +
+  scale_y_continuous(breaks = breaks_pretty(6))
+
 
 monetary_shocks_cleaned <-
   monetary_shocks |>
   mutate(
     estimate_brw =
       ifelse(year_month %in% FOMC_months$fomc_yearmonth, estimate, 0),
+    estimate_ref = ifelse(p.value <= 0.01, estimate_brw, 0),
     date = ym(year_month + 1) - 1
   ) |>
-  select(date,year_month, estimate_brw)
+  select(date, year_month, estimate_brw, estimate_ref)
 
+
+
+pacf(monetary_shocks_cleaned$estimate_ref)
 
 # Results Export -----
 
 write_csv(monetary_shocks_cleaned, "MonetaryShocksBuRogersWu.csv")
 
-message("Monetary shocks estimation completed successfully! 
+message("Monetary shocks estimation completed successfully!
         Results saved to 'MonetaryShocksBuRogersWu.csv'")
