@@ -2,7 +2,9 @@ if (!requireNamespace("pacman", quietly = TRUE)) {
   install.packages("pacman")
 }
 
-pacman::p_load(tidyverse, here, lubridate, moexer, padr, devtools, data.table, tidytable)
+# pak::pak("x1o/moexer")
+pacman::p_load(here, lubridate, moexer, padr, devtools, data.table, tidytable, tidyverse)
+
 
 
 # --- 1. UPDATE PARAMS DATA -----
@@ -98,7 +100,7 @@ calc_yield_for_horizon <- function(df, t, a, b) {
 }
 
 
-horizons <- c(seq(0.5, 4, by = 1 /12 ))|> unique()
+horizons <- c(seq(1/24, 2, by = 1 /12/2 ), seq(2,3, by=1/12))|> unique()
 # c(1/12, 0.25, 0.5, 0.75, 1, 2, 3, 5, 7, 10, 15, 20, 30)
 
 # Calculate the yields for each horizon and merge them into a finished tibble

@@ -1,8 +1,7 @@
 library(pacman)
 
 p_load(
-  openxlsx, readr, readxl, tsibble, broom,
-  systemfonts, ragg, scales, tidyverse, DescTools, knitr
+  openxlsx, readr, readxl, tsibble, broom, ragg, scales, tidyverse, DescTools, knitr
 )
 
 
@@ -221,7 +220,7 @@ ggsave("~/Library/CloudStorage/OneDrive-Personal/MACRO/export/ru_monetary_shocks
 table_for_print <-
   MonetaryShocksBuRogersWu |>
   mutate(year_month = yearmonth(year_month)) |>
-  filter(year_month > yearmonth("2025-02-01"), estimate_brw != 0) |>
+  filter(year_month > yearmonth("2025-03-01"), estimate_brw != 0) |>
   select(year_month, estimate_brw) |>
   mutate(estimate_brw = round(estimate_brw, 2)) |>
   mutate(shock = case_when(
@@ -233,7 +232,7 @@ table_for_print <-
   )) |>
   mutate(date = paste(
     year(year_month),
-    lubridate::month(year_month, label = TRUE, abbr = T, locale = "ru_RU"),
+    lubridate::month(year_month, label = F, abbr = T, locale = "ru_RU"),
     sep = " "
   )) |>
   select(-year_month, -estimate_brw) |>

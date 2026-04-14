@@ -186,17 +186,17 @@ beta_vector <- betas$estimate
   }
 }
 
-# 
-# diff_returns_monthly |>
-#   pivot_longer(cols = -year_month) |>
-#   mutate(horizon = as.numeric(str_remove(name, "CBRFYC"))) |>
-#   mutate(year = year(year_month), month = month(year_month)) |>
-#   filter(year_month%in% FOMC_months$fomc_yearmonth)|>
-#   ggplot(aes(y = value, x = horizon, color = year_month, group = year_month)) +
-#   geom_line()+
-#   geom_hline(aes(yintercept = 0), color="darkred")+
-#   facet_grid(year~month, scales = "free_y", axes	="all_y") 
-# 
+
+diff_returns_monthly |>
+  pivot_longer(cols = -year_month) |>
+  mutate(horizon = as.numeric(str_remove(name, "CBRFYC"))) |>
+  mutate(year = year(year_month), month = month(year_month)) |>
+  filter(year_month%in% FOMC_months$fomc_yearmonth)|>
+  ggplot(aes(y = value, x = horizon, color = year_month, group = year_month)) +
+  geom_line()+
+  geom_hline(aes(yintercept = 0), color="darkred")+
+  facet_grid(year~month, scales = "free", axes	="all")
+
 # 
 # ggsave(
 #   filename = "return_profiles.pdf", 
@@ -226,7 +226,7 @@ monetary_shocks_cleaned <-
 
 
 
-pacf(monetary_shocks_cleaned$estimate_ref)
+# pacf(monetary_shocks_cleaned$estimate_ref)
 
 # Results Export -----
 
