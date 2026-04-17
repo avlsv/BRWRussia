@@ -149,63 +149,56 @@ first_stage_data <- bind_cols(first_stage_data_no_iv, instruments) |>
 }
 
 betas <- betas |> mutate(horizon = as.numeric(str_remove(term, "CBRFYC")))
-
 ## Second Stage -----
 
 ### Preparation ------
+# Use ONLY the 1-day changes on the monetary policy announcement days.
+# Drop the benchmark rate (CBRFYC2) as instructed by the paper.
 
-diff_returns_monthly <-
-  returns_restricted |>
-  mutate(year_month = yearmonth(index)) |>
-  group_by(year_month) |>
-  summarise(across(-index, sum)) |>
-  select(-CBRFYC2)
-
+second_stage_data <- monetary_region_diff_rate |> select(-CBRFYC2)
 beta_vector <- betas$estimate
 
-
 ### Second stage start ------
+monetary_shocks <- tibble()
 
+for (i in 1:nrow(second_stage_data)) {
+  # Extract the 1-day yield changes for the i-th policy meeting
+  yields <- second_stage_data[i, ] |> unlist()
 
-{
-  monetary_shocks <- tibble()
-  for (i in 1:dim(diff_returns_monthly)[1]) {
-    yields <- diff_returns_monthly[i, ] |>
-      select(-year_month) |>
-      unlist()
+  # Cross-sectional regression of yields on the sensitivity index (betas)
+  reg <- lm(yields ~ beta_vector) |> tidy()
 
-    reg <- lm(yields ~ beta_vector) |> tidy()
+  # The exact date of the policy meeting
+  meeting_date <- monetary_region[i]
 
-    year_month_i <- diff_returns_monthly$year_month[i]
+  # Extract the coefficient for beta_vector (which is row 2)
+  shock <-
+    add_column(reg, date = meeting_date)[2, ] |>
+    select(-term)
 
-    shock <-
-      add_column(reg, year_month = year_month_i)[2, ] |>
-      select(-term)
-
-    monetary_shocks <- bind_rows(monetary_shocks, shock)
-  }
+  monetary_shocks <- bind_rows(monetary_shocks, shock)
 }
 
 
-diff_returns_monthly |>
-  pivot_longer(cols = -year_month) |>
-  mutate(horizon = as.numeric(str_remove(name, "CBRFYC"))) |>
-  mutate(year = year(year_month), month = month(year_month)) |>
-  filter(year_month%in% FOMC_months$fomc_yearmonth)|>
-  ggplot(aes(y = value, x = horizon, color = year_month, group = year_month)) +
-  geom_line()+
-  geom_hline(aes(yintercept = 0), color="darkred")+
-  facet_grid(year~month, scales = "free", axes	="all")
+# diff_returns_monthly |>
+#   pivot_longer(cols = -year_month) |>
+#   mutate(horizon = as.numeric(str_remove(name, "CBRFYC"))) |>
+#   mutate(year = year(year_month), month = month(year_month)) |>
+#   filter(year_month %in% FOMC_months$fomc_yearmonth) |>
+#   ggplot(aes(y = value, x = horizon, color = year_month, group = year_month)) +
+#   geom_line() +
+#   geom_hline(aes(yintercept = 0), color = "darkred") +
+#   facet_grid(year ~ month, scales = "free", axes = "all")
 
-# 
+#
 # ggsave(
-#   filename = "return_profiles.pdf", 
-#   width = 420, 
-#   height = 297, 
-#   units = "mm", 
+#   filename = "return_profiles.pdf",
+#   width = 420,
+#   height = 297,
+#   units = "mm",
 #   dpi = 300
 # )
-# 
+#
 
 ggplot(betas, aes(x = horizon, y = estimate)) +
   geom_line() +
@@ -216,6 +209,11 @@ ggplot(betas, aes(x = horizon, y = estimate)) +
 
 monetary_shocks_cleaned <-
   monetary_shocks |>
+  mutate(year_month = yearmonth(date)) |>
+  group_by(year_month) |>
+  mutate(estimate = sum(estimate)) |>
+  ungroup() |>
+  distinct() |>
   mutate(
     estimate_brw =
       ifelse(year_month %in% FOMC_months$fomc_yearmonth, estimate, 0),
@@ -223,7 +221,6 @@ monetary_shocks_cleaned <-
     date = ym(year_month + 1) - 1
   ) |>
   select(date, year_month, estimate_brw, estimate_ref)
-
 
 
 # pacf(monetary_shocks_cleaned$estimate_ref)

@@ -100,7 +100,7 @@ calc_yield_for_horizon <- function(df, t, a, b) {
 }
 
 
-horizons <- c(seq(1/24, 2, by = 1 /12/2 ), seq(2,3, by=1/12))|> unique()
+horizons <- c(seq(1/24, 1, by = 1 /12/2 ), seq(1+1/12,3, by=1/12))|> unique()
 # c(1/12, 0.25, 0.5, 0.75, 1, 2, 3, 5, 7, 10, 15, 20, 30)
 
 # Calculate the yields for each horizon and merge them into a finished tibble
