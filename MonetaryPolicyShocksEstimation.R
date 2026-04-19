@@ -220,7 +220,7 @@ monetary_shocks_cleaned <-
     estimate_ref = ifelse(p.value <= 0.01, estimate_brw, 0),
     date = ym(year_month + 1) - 1
   ) |>
-  select(date, year_month, estimate_brw, estimate_ref)
+  select(date, year_month, estimate_brw, estimate_ref) |>  distinct() 
 
 
 # pacf(monetary_shocks_cleaned$estimate_ref)
