@@ -117,7 +117,7 @@ ggsave("~/Library/CloudStorage/OneDrive-Personal/MACRO/export/ru_shocks_variance
 shocks_quarterly_plot <-
   ggplot(shocks_quarterly, aes(x = date_yq, y = estimate_brw)) +
   geom_col(fill = "#6E8C2F", color = "#404040") +
-  scale_y_continuous(NULL, position = "right") +
+  scale_y_continuous("п.п.", position = "right") +
   scale_x_yearquarter(NULL, date_breaks = "1 year", date_labels = "'%y") +
   labs(
     title = "монетарные шоки, сумма по кварталам",
@@ -200,7 +200,7 @@ ggsave("~/Library/CloudStorage/OneDrive-Personal/MACRO/export/ru_monetary_shocks
 shocks_monthly_plot <-
   ggplot(MonetaryShocksBuRogersWu, aes(x = yearmonth(year_month), y = estimate_brw)) +
   geom_col(fill = "#6E8C2F", color = "#404040", linewidth = 0.2) +
-  scale_y_continuous(NULL, position = "right") +
+  scale_y_continuous("п.п.", position = "right") +
   scale_x_yearmonth(NULL, date_breaks = "1 year", date_labels = "'%y") +
   labs(
     title = "монетарные шоки по месяцам",
