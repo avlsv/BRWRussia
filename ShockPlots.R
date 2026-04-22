@@ -206,7 +206,6 @@ shocks_monthly_plot <-
     title = "монетарные шоки по месяцам",
     caption = "шоки посчитаны ЦМИ по методу Bu-Rogers-Wu (2021)\nразмер шока эквивалентен изменению кривой доходности на горизонте 2х лет"
   ) +
-  theme_light() +
   theme_light()+
   theme(
     # --- 1. OVERALL PLOT & PANEL BACKGROUND ---
