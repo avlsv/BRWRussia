@@ -8,3 +8,4 @@
 |2025 дек        |<span style='color:#355E3B;'>–0.69%</span> |
 |2026 февр       |<span style='color:#355E3B;'>–0.03%</span> |
 |2026 марта      |<span style='color:#8A0D2F;'>+0.1%</span>  |
+|2026 апр        |<span style='color:#355E3B;'>–0.22%</span> |
