@@ -4,6 +4,8 @@ if (!requireNamespace("pacman", quietly = TRUE)) {
   install.packages("pacman")
 }
 
+
+
 pacman::p_load(
   tidyverse, openxlsx,
   lubridate, readxl,
@@ -220,7 +222,7 @@ monetary_shocks_cleaned <-
     estimate_ref = ifelse(p.value <= 0.01, estimate_brw, 0),
     date = ym(year_month + 1) - 1
   ) |>
-  select(date, year_month, estimate_brw, estimate_ref) |>  distinct() 
+  select(date, year_month, estimate_brw) |>  distinct() 
 
 
 # pacf(monetary_shocks_cleaned$estimate_ref)
@@ -228,6 +230,8 @@ monetary_shocks_cleaned <-
 # Results Export -----
 
 write_csv(monetary_shocks_cleaned, "MonetaryShocksBuRogersWu.csv")
+
+write.xlsx(monetary_shocks_cleaned, "MonetaryShocksBuRogersWu.xlsx")
 
 message("Monetary shocks estimation completed successfully!
         Results saved to 'MonetaryShocksBuRogersWu.csv'")

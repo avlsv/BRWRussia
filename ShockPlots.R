@@ -282,7 +282,7 @@ table_for_print <-
     estimate_brw > 0 ~ 
       paste0("<span style='color:#8A0D2F;'>+", estimate_brw, "%</span>"),
     estimate_brw < 0 ~ 
-      paste0("<span style='color:#355E3B;'>–", -estimate_brw, "%</span>"),
+      paste0("<span style='color:#4A6B52;'>–", -estimate_brw, "%</span>"),
     TRUE ~ as.character(estimate_brw)
   )) |>
   mutate(date = paste(
