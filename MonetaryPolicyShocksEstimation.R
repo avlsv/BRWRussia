@@ -6,6 +6,8 @@ if (!requireNamespace("pacman", quietly = TRUE)) {
 
 
 
+
+
 pacman::p_load(
   tidyverse, openxlsx,
   lubridate, readxl,
@@ -160,6 +162,13 @@ betas <- betas |> mutate(horizon = as.numeric(str_remove(term, "CBRFYC")))
 second_stage_data <- monetary_region_diff_rate |> select(-CBRFYC2)
 beta_vector <- betas$estimate
 
+second_stage_data |>
+  last() |>
+  pivot_longer() |>
+  mutate(horizon = as.numeric(str_remove(name, "CBRFYC"))) |>
+  ggplot(aes(x = horizon, y = value)) +
+  geom_line()
+
 ### Second stage start ------
 monetary_shocks <- tibble()
 
@@ -181,7 +190,7 @@ for (i in 1:nrow(second_stage_data)) {
   monetary_shocks <- bind_rows(monetary_shocks, shock)
 }
 
-
+# 
 # diff_returns_monthly |>
 #   pivot_longer(cols = -year_month) |>
 #   mutate(horizon = as.numeric(str_remove(name, "CBRFYC"))) |>
