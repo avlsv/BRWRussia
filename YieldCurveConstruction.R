@@ -100,7 +100,7 @@ calc_yield_for_horizon <- function(df, t, a, b) {
 }
 
 
-horizons <- c(seq(1/24, 1, by = 1 /12),1,2, seq(1+1/12,2, by=1/6), seq(2,4, by=1/6))|> unique()
+horizons <- c(seq(1/24, 1, by = 1 /12), 3/12, 1,2, seq(1+1/12,2, by=1/6), seq(2,4, by=1/6))|> unique()
 # c(1/12, 0.25, 0.5, 0.75, 1, 2, 3, 5, 7, 10, 15, 20, 30)
 
 # Calculate the yields for each horizon and merge them into a finished tibble
@@ -128,6 +128,15 @@ yield_curves_tbl_an <- yield_curves_tbl |>
   rename(index = tradedate)
 
 write_csv(yield_curves_tbl_an, "yield_curves_1.csv")
+
+
+# yield_curves_tbl_an |> filter(index>=date("2025-01-01")) |> 
+#   ggplot(aes(x=index, y=CBRFYC0.25)) +
+#   geom_line()+
+#   geom_hline(aes(yintercept = 16.21))+
+#   scale_x_date(date_breaks="3 month", date_labels = "'%y-%m")+
+#   scale_y_continuous("3 month", breaks=pretty_breaks(n=10), position="right")+
+#   theme_minimal()
 
 
 ## Old code that extracts rates from moex directly (not parameters) -----
