@@ -9,21 +9,15 @@ if (!requireNamespace("pacman", quietly = TRUE)) {
 
 
 pacman::p_load(
-  tidyverse, openxlsx,
+  here, tidyverse, openxlsx,
   lubridate, readxl,
   estimatr, tsibble, broom
 )
 
-# renv::snapshot()
-# i_am("BRWRussia/MonetaryPolicyShocksEstimation.R")
-# setwd(here("BRWRussia"))
-# setwd("~/Documents/BRWRussia")
-
-# source("YieldCurveConstruction.R")
-# source("BoRSiteParser.R")
 
 
-rates <- read_csv("yield_curves_1.csv") |>
+
+rates <- read_csv(here::here("data/yield_curves.csv")) |>
   mutate(index = as.Date(index)) |>
   filter(!if_all(!index, is.na)) |>
   suppressMessages() |>
@@ -34,7 +28,7 @@ returns <- rates |>
   mutate(across(-index, \(x) c(NA, diff(x, lag = 1))))
 
 
-FOMC_dates <- read_csv("BoRMPSchedule.csv") |>
+FOMC_dates <- read_csv(here::here("data/BoRMPSchedule.csv")) |>
   select(date, meeting_link_ru) |>
   rename(fomc_date = date) |>
   na.omit() |>
@@ -169,12 +163,6 @@ alpha_vector <- betas$alpha
 
 stopifnot(identical(betas$term, names(second_stage_data)))
 
-second_stage_data |>
-  last() |>
-  pivot_longer(everything()) |>
-  mutate(horizon = as.numeric(str_remove(name, "CBRFYC"))) |>
-  ggplot(aes(x = horizon, y = value)) +
-  geom_line()
 
 ### Second stage start ------
 monetary_shocks <- tibble()
@@ -222,11 +210,6 @@ for (i in 1:nrow(second_stage_data)) {
 # )
 #
 
-ggplot(betas, aes(x = horizon, y = estimate)) +
-  geom_line() +
-  geom_point() +
-  scale_x_continuous(n.breaks = 6) +
-  scale_y_continuous(breaks = scales::breaks_pretty(6))
 
 
 monetary_shocks_cleaned <-
@@ -245,13 +228,42 @@ monetary_shocks_cleaned <-
   select(date, year_month, estimate_brw) |>  distinct() 
 
 
+# Every month from the first decision to the last day of yield data:
+# 0 where there was no key rate decision, NA where every decision of the month fell on a day
+# without yield data (the MOEX bond market was closed in late February and March 2022)
+
+lost_months <-
+  common_region |>
+  filter(is.na(CBRFYC3)) |>
+  mutate(year_month = yearmonth(fomc_date)) |>
+  filter(!year_month %in% monetary_shocks_cleaned$year_month) |>
+  pull(year_month)
+
+all_months <- tibble(
+  year_month = seq(min(monetary_shocks_cleaned$year_month), yearmonth(max(rates$index)), by = 1)
+)
+
+monetary_shocks_cleaned <-
+  all_months |>
+  left_join(select(monetary_shocks_cleaned, year_month, estimate_brw), by = "year_month") |>
+  mutate(
+    estimate_brw = case_when(
+      !is.na(estimate_brw) ~ estimate_brw,
+      year_month %in% lost_months ~ NA_real_,
+      TRUE ~ 0
+    ),
+    date = ym(year_month + 1) - 1
+  ) |>
+  select(date, year_month, estimate_brw)
+
+
 # pacf(monetary_shocks_cleaned$estimate_ref)
 
 # Results Export -----
 
-write_csv(monetary_shocks_cleaned, "MonetaryShocksBuRogersWu.csv")
+write_csv(monetary_shocks_cleaned, here::here("output/MonetaryShocksBuRogersWu.csv"))
 
-write.xlsx(monetary_shocks_cleaned, "MonetaryShocksBuRogersWu.xlsx")
+write.xlsx(monetary_shocks_cleaned, here::here("output/MonetaryShocksBuRogersWu.xlsx"))
 
 message("Monetary shocks estimation completed successfully!
-        Results saved to 'MonetaryShocksBuRogersWu.csv'")
+        Results saved to output/MonetaryShocksBuRogersWu.csv")

@@ -1,11 +1,18 @@
-library(pacman)
+if (!requireNamespace("pacman", quietly = TRUE)) {
+  install.packages("pacman")
+}
 
-p_load(
-  openxlsx, readr, readxl, tsibble, broom, ragg, scales, tidyverse, DescTools, knitr
+pacman::p_load(
+  here, openxlsx, readr, readxl, tsibble, broom, ragg, scales, tidyverse, DescTools, knitr, systemfonts
 )
 
 
-MonetaryShocksBuRogersWu <- read_csv("MonetaryShocksBuRogersWu.csv")
+# Corporate font if installed, the default sans otherwise
+base_family <- if ("SB Sans Interface" %in% systemfonts::system_fonts()$family) "SB Sans Interface" else ""
+
+dir.create(here::here("output/figures"), showWarnings = FALSE, recursive = TRUE)
+
+MonetaryShocksBuRogersWu <- read_csv(here::here("output/MonetaryShocksBuRogersWu.csv"))
 
 
 shocks_quarterly <-
@@ -15,11 +22,13 @@ shocks_quarterly <-
     date_yq = yearquarter(date)
   ) |>
   group_by(date_yq) |>
-  summarise(estimate_brw = sum(estimate_brw))
+  summarise(estimate_brw = sum(estimate_brw, na.rm = TRUE))
 
 
 shocks_variance_yearly <-
   MonetaryShocksBuRogersWu |>
+  # decision months only: the zeros of months without a decision are not shocks
+  filter(!is.na(estimate_brw), estimate_brw != 0) |>
   mutate(date_y = year(date)) |>
   group_by(date_y) |>
   filter(date_y < 2026) |>
@@ -52,7 +61,7 @@ shocks_variance_plot <-
     plot.margin = unit(c(0.5, 0.5, 0.5, 0.5), "in"),
 
     # --- 2. GLOBAL TEXT & TITLES ---
-    text = element_text(size = 10, color = "#2F2926", family = "SB Sans Interface"),
+    text = element_text(size = 10, color = "#2F2926", family = base_family),
     plot.title = element_text(size = 11, color = "#2F2926", hjust = 0, margin = margin(b = 2)),
     plot.subtitle = element_text(size = 10, color = "#2F2926"),
     plot.caption = element_text(size = 6, color = "#737373"),
@@ -94,21 +103,16 @@ shocks_variance_plot <-
   )
 
 
-shocks_variance_plot
+if (interactive()) print(shocks_variance_plot)
 
-ggsave("ru_shocks_variance_plot.png",
+ggsave(here::here("output/figures/ru_shocks_variance_plot.png"),
   shocks_variance_plot,
   width = 5.25,
   height = 5.25,
-  dpi = 400
+  dpi = 400,
+  device = ragg::agg_png
 )
 
-ggsave("~/Library/CloudStorage/OneDrive-Personal/MACRO/export/ru_shocks_variance_plot.png",
-  shocks_variance_plot,
-  width = 5.25,
-  height = 5.25,
-  dpi = 400
-)
 
 
 shocks_quarterly_plot <-
@@ -130,7 +134,7 @@ shocks_quarterly_plot <-
     plot.margin = unit(c(0.5, 0.5, 0.5, 0.5), "in"),
 
     # --- 2. GLOBAL TEXT & TITLES ---
-    text = element_text(size = 10, color = "#2F2926", family = "SB Sans Interface"),
+    text = element_text(size = 10, color = "#2F2926", family = base_family),
     plot.title = element_text(size = 11, color = "#2F2926", hjust = 0, margin = margin(b = 2)),
     plot.subtitle = element_text(size = 10, color = "#2F2926"),
     plot.caption = element_text(size = 6, color = "#737373"),
@@ -172,19 +176,14 @@ shocks_quarterly_plot <-
   )
 
 
-ggsave("ru_monetary_shocks_quarterly.png",
+ggsave(here::here("output/figures/ru_monetary_shocks_quarterly.png"),
   shocks_quarterly_plot,
   width = 5.25,
   height = 5.25,
-  dpi = 400
+  dpi = 400,
+  device = ragg::agg_png
 )
 
-ggsave("~/Library/CloudStorage/OneDrive-Personal/MACRO/export/ru_monetary_shocks_quarterly.png",
-  shocks_quarterly_plot,
-  width = 5.25,
-  height = 5.25,
-  dpi = 400
-)
 
 
 shocks_monthly_plot <-
@@ -207,7 +206,7 @@ shocks_monthly_plot <-
     plot.margin = unit(c(0.5, 0.5, 0.5, 0.5), "in"),
 
     # --- 2. GLOBAL TEXT & TITLES ---
-    text = element_text(size = 10, color = "#2F2926", family = "SB Sans Interface"),
+    text = element_text(size = 10, color = "#2F2926", family = base_family),
     plot.title = element_text(size = 11, color = "#2F2926", hjust = 0, margin = margin(b = 2)),
     plot.subtitle = element_text(size = 10, color = "#2F2926"),
     plot.caption = element_text(size = 6, color = "#737373"),
@@ -249,19 +248,14 @@ shocks_monthly_plot <-
   )
 
 
-ggsave("ru_monetary_shocks_monthly.png",
+ggsave(here::here("output/figures/ru_monetary_shocks_monthly.png"),
   shocks_monthly_plot,
   width = 5.25,
   height = 5.25,
-  dpi = 400
+  dpi = 400,
+  device = ragg::agg_png
 )
 
-ggsave("~/Library/CloudStorage/OneDrive-Personal/MACRO/export/ru_monetary_shocks_monthly.png",
-  shocks_monthly_plot,
-  width = 5.25,
-  height = 5.25,
-  dpi = 400
-)
 
 
 shocks_monthly_plot_restricted <-
@@ -286,7 +280,7 @@ shocks_monthly_plot_restricted <-
     plot.margin = unit(c(0.5, 0.5, 0.5, 0.5), "in"),
 
     # --- 2. GLOBAL TEXT & TITLES ---
-    text = element_text(size = 10, color = "#2F2926", family = "SB Sans Interface"),
+    text = element_text(size = 10, color = "#2F2926", family = base_family),
     plot.title = element_text(size = 11, color = "#2F2926", hjust = 0, margin = margin(b = 2)),
     plot.subtitle = element_text(size = 10, color = "#2F2926"),
     plot.caption = element_text(size = 6, color = "#737373"),
@@ -328,26 +322,21 @@ shocks_monthly_plot_restricted <-
   )
 
 
-ggsave("ru_monetary_shocks_monthly.png",
+ggsave(here::here("output/figures/ru_monetary_shocks_monthly.png"),
   shocks_monthly_plot,
   width = 5.25,
   height = 5.25,
-  dpi = 400
+  dpi = 400,
+  device = ragg::agg_png
 )
 
-ggsave("~/Library/CloudStorage/OneDrive-Personal/MACRO/export/ru_monetary_shocks_monthly.png",
-  shocks_monthly_plot,
-  width = 5.25,
-  height = 5.25,
-  dpi = 400
-)
 
 
 
 table_for_print <-
   MonetaryShocksBuRogersWu |>
   mutate(year_month = yearmonth(year_month)) |>
-  filter(year_month > yearmonth("2025-03-01"), estimate_brw != 0) |>
+  filter(year_month > yearmonth("2025-03-01"), !is.na(estimate_brw), estimate_brw != 0) |>
   select(year_month, estimate_brw) |>
   mutate(estimate_brw = round(estimate_brw, 2)) |>
   mutate(shock = case_when(
@@ -365,4 +354,4 @@ table_for_print <-
 md_table <- kable(table_for_print, format = "pipe")
 
 # 3. Save it to your working directory
-writeLines(md_table, "last_monetary_shocks.md")
+writeLines(md_table, here::here("output/last_monetary_shocks.md"))

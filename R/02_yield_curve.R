@@ -9,7 +9,7 @@ pacman::p_load(here, lubridate, moexer, padr, devtools, data.table, tidytable, t
 
 # --- 1. UPDATE PARAMS DATA -----
 
-file_path <- "yc_parameters.csv"
+file_path <- here::here("data/yc_parameters.csv")
 
 # MOEX recomputes the curve during the trading day, so the curve for today is an intraday
 # snapshot (the end-of-day curve is stamped about 18:49). Fetch completed days only, and
@@ -141,7 +141,7 @@ yield_curves_tbl_an <- yield_curves_tbl |>
   mutate_at(vars(-tradedate), \(x)x / 100) |>
   rename(index = tradedate)
 
-write_csv(yield_curves_tbl_an, "yield_curves_1.csv")
+write_csv(yield_curves_tbl_an, here::here("data/yield_curves.csv"))
 
 
 # yield_curves_tbl_an |> filter(index>=date("2025-01-01")) |> 

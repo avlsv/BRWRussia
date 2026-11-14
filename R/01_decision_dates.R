@@ -2,7 +2,7 @@ if (!requireNamespace("pacman", quietly = TRUE)) {
   install.packages("pacman")
 }
 
-pacman::p_load(rvest, stringr, dplyr, readr, tibble) # tibble added for structured output
+pacman::p_load(here, rvest, stringr, dplyr, readr, tibble) # tibble added for structured output
 
 target_url <- "https://www.cbr.ru/dkp/cal_mp/"
 
@@ -54,7 +54,7 @@ tryCatch(
 
       message(paste("\nSuccessfully extracted", nrow(final_data), "meetings since 2020-09-18."))
 
-      saved_meetings <- read_csv("BoRMPSchedule.csv", show_col_types = FALSE) |> 
+      saved_meetings <- read_csv(here::here("data/BoRMPSchedule.csv"), show_col_types = FALSE) |> 
         mutate(date = as.Date(date))
 
       nrow(saved_meetings)
@@ -66,8 +66,8 @@ tryCatch(
         arrange(date)
       
       if (nrow(updated_schedule) > nrow(saved_meetings)) {
-        message("New meetings were founded, the BoRMPSchedule.csv is being updated")
-        write_csv(updated_schedule, "BoRMPSchedule.csv")
+        message("New meetings were founded, data/BoRMPSchedule.csv is being updated")
+        write_csv(updated_schedule, here::here("data/BoRMPSchedule.csv"))
       } else {
         message("No new meeting was founded")
       }
