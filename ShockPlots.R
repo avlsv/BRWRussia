@@ -352,16 +352,12 @@ table_for_print <-
   mutate(estimate_brw = round(estimate_brw, 2)) |>
   mutate(shock = case_when(
     estimate_brw > 0 ~
-      paste0("<span style='color:#8A0D2F;'>+", estimate_brw, "</span>"),
+      paste0("<span style='color:#8A0D2F;'>+", sprintf("%.2f", estimate_brw), "</span>"),
     estimate_brw < 0 ~
-      paste0("<span style='color:#4A6B52;'>–", -estimate_brw, "</span>"),
-    TRUE ~ as.character(estimate_brw)
+      paste0("<span style='color:#4A6B52;'>–", sprintf("%.2f", -estimate_brw), "</span>"),
+    TRUE ~ sprintf("%.2f", estimate_brw)
   )) |>
-  mutate(date = paste(
-    year(year_month),
-    lubridate::month(year_month, label = T, abbr = T, locale = "ru_RU"),
-    sep = " "
-  )) |>
+  mutate(date = format(as.Date(year_month), "%Y-%m")) |>
   select(-year_month, -estimate_brw) |>
   relocate(date) |>
   rename(`монетарный шок п.п.` = shock, `месяц заседания` = date)

@@ -10,14 +10,21 @@ pacman::p_load(here, lubridate, moexer, padr, devtools, data.table, tidytable, t
 # --- 1. UPDATE PARAMS DATA -----
 
 file_path <- "yc_parameters.csv"
+
+# MOEX recomputes the curve during the trading day, so the curve for today is an intraday
+# snapshot (the end-of-day curve is stamped about 18:49). Fetch completed days only, and
+# fetch the last refetch_days saved days again, so a snapshot saved by a daytime run is
+# replaced by the end-of-day curve.
+refetch_days <- 7
 d_till <- query_iss(rest_path = "engines/stock/zcyc")$yearyields.dates$till |> as.Date()
+d_till <- min(d_till, Sys.Date() - 1)
 
 # Load existing data and set d_from, or start from scratch if file is missing
 if (file.exists(file_path)) {
   parameters_saved <- read_csv(file_path, show_col_types = FALSE)
   # Get the latest date we already have in the file
   last_date <- max(as.Date(parameters_saved$tradedate), na.rm = TRUE)
-  d_from <- last_date + 1
+  d_from <- last_date - refetch_days
 } else {
   parameters_saved <- tibble()
   d_from <- as.Date("2014-01-06")
@@ -37,17 +44,24 @@ if (d_from <= d_till) {
       )
     )
 
-    # Check if data exists (MOEX implies no params on weekends/trading holidays)
+    # Check if data exists (MOEX implies no params on weekends/trading holidays);
+    # keep only rows dated the day asked, in case MOEX answers with another day's curve
     if (!is.null(res$params) && nrow(res$params) > 0) {
-      params_new <- bind_rows(params_new, res$params)
+      day_params <- res$params |> filter(as.Date(tradedate) == as.Date(i))
+      params_new <- bind_rows(params_new, day_params)
     }
 
     message(as.Date(i), " finished")
   }
 
-  # Bind with old data and save using write_csv (avoids creating rowname columns)
+  # Bind with old data and save using write_csv (avoids creating rowname columns);
+  # refetched days replace the saved rows of the same date
   if (nrow(params_new) > 0) {
-    params_tbl <- bind_rows(parameters_saved, params_new)
+    params_tbl <- bind_rows(
+      parameters_saved |> filter(!as.Date(tradedate) %in% as.Date(params_new$tradedate)),
+      params_new
+    ) |>
+      arrange(as.Date(tradedate))
     write_csv(params_tbl, file_path)
     message("Data updated and saved to ", file_path)
   } else {

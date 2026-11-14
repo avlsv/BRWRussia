@@ -142,11 +142,15 @@ first_stage_data <- bind_cols(first_stage_data_no_iv, instruments) |>
     formula_string <- paste0(names(first_stage_data)[i], " ~ regressor| instrument")
     current_formula <- as.formula(formula_string)
 
-    reg <- estimatr::iv_robust(current_formula, data = first_stage_data) |>
-      tidy() |>
-      filter(term == "regressor")
+    fit <- estimatr::iv_robust(current_formula, data = first_stage_data) |>
+      tidy()
+
+    reg <- fit |> filter(term == "regressor")
 
     reg[1, 1] <- names(first_stage_data)[i]
+
+    # The constant alpha_i of eq. (4) is needed in the second stage, eq. (5)
+    reg$alpha <- fit$estimate[fit$term == "(Intercept)"]
 
     betas <- bind_rows(betas, reg)
   }
@@ -161,10 +165,13 @@ betas <- betas |> mutate(horizon = as.numeric(str_remove(term, "CBRFYC")))
 
 second_stage_data <- monetary_region_diff_rate |> select(-CBRFYC2)
 beta_vector <- betas$estimate
+alpha_vector <- betas$alpha
+
+stopifnot(identical(betas$term, names(second_stage_data)))
 
 second_stage_data |>
   last() |>
-  pivot_longer() |>
+  pivot_longer(everything()) |>
   mutate(horizon = as.numeric(str_remove(name, "CBRFYC"))) |>
   ggplot(aes(x = horizon, y = value)) +
   geom_line()
@@ -176,15 +183,19 @@ for (i in 1:nrow(second_stage_data)) {
   # Extract the 1-day yield changes for the i-th policy meeting
   yields <- second_stage_data[i, ] |> unlist()
 
-  # Cross-sectional regression of yields on the sensitivity index (betas)
-  reg <- lm(yields ~ beta_vector) |> tidy()
+  # Cross-sectional regression of yields on the sensitivity index (betas), eq. (5) of
+  # Bu, Rogers, Wu (FEDS 2019-043): dR_i,t = alpha_i + e_t * beta_i + v_i,t.
+  # The constants are the first-stage alpha_i, not a new constant for each meeting:
+  # with betas between 0.9 and 1.4 such a constant absorbs most of the move
+  reg <- lm(I(yields - alpha_vector) ~ 0 + beta_vector) |> tidy()
 
   # The exact date of the policy meeting
   meeting_date <- monetary_region[i]
 
-  # Extract the coefficient for beta_vector (which is row 2)
+  # Extract the coefficient for beta_vector
   shock <-
-    add_column(reg, date = meeting_date)[2, ] |>
+    add_column(reg, date = meeting_date) |>
+    filter(term == "beta_vector") |>
     select(-term)
 
   monetary_shocks <- bind_rows(monetary_shocks, shock)
@@ -215,7 +226,7 @@ ggplot(betas, aes(x = horizon, y = estimate)) +
   geom_line() +
   geom_point() +
   scale_x_continuous(n.breaks = 6) +
-  scale_y_continuous(breaks = breaks_pretty(6))
+  scale_y_continuous(breaks = scales::breaks_pretty(6))
 
 
 monetary_shocks_cleaned <-
